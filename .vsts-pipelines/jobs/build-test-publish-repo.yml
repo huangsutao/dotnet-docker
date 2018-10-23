@@ -3,7 +3,7 @@ jobs:
   # Initialization - Generate the VSTS build matrix
   ################################################################################
 - job: GenerateMatrices
-  pool: # linuxAmd64Pool
+  pool: # linuxAmd64
     name: DotNet-Build
     demands: agent.os -equals linux
   workspace:
@@ -22,7 +22,7 @@ jobs:
 - template: build-images.yml
   parameters:
     name: Build_Linux_amd64
-    pool: # linuxAmd64Pool
+    pool: # linuxAmd64
       name: DotNet-Build
       demands:
       - agent.os -equals linux
@@ -31,7 +31,7 @@ jobs:
 - template: build-images.yml
   parameters:
     name: Build_Linux_arm64v8
-    pool: # linuxArm64v8Pool
+    pool: # linuxArm64v8
       name: DotNetCore-Infra
       demands:
       - agent.os -equals linux
@@ -43,7 +43,7 @@ jobs:
 - template: build-images.yml
   parameters:
     name: Build_Linux_arm32v7
-    pool: # linuxArm32v7Pool
+    pool: # linuxArm32v7
       name: DotNetCore-Infra
       demands:
       - agent.os -equals linux
@@ -82,6 +82,18 @@ jobs:
     matrix: $[ dependencies.GenerateMatrices.outputs['buildMatrix.buildMatrixNanoserver1803Amd64'] ]
     osVersion: nanoserver-1803
     dockerClientOS: windows
+- template: build-images.yml
+  parameters:
+    name: Build_NanoServer1809_arm32
+    pool: # nanoServer1809Arm32
+      name: DotNetCore-Infra
+      demands:
+      - agent.os -equals linux
+      - RemoteDockerServerOS -equals nanoserver-1809
+      - RemoteDockerServerArch -equals arm32
+    matrix: $[ dependencies.GenerateMatrices.outputs['buildMatrix.buildMatrixNanoserver1809Arm32'] ]
+    dockerClientOS: linux
+    useRemoteDockerServer: true
 
   ################################################################################
   # Test Images
@@ -90,7 +102,7 @@ jobs:
   parameters:
     name: Test_Linux_amd64
     buildDependencies: Build_Linux_amd64
-    pool: # linuxAmd64Pool
+    pool: # linuxAmd64
       name: DotNet-Build
       demands:
       - agent.os -equals linux
@@ -100,7 +112,7 @@ jobs:
   parameters:
     name: Test_Linux_arm64v8
     buildDependencies: Build_Linux_arm64v8
-    pool: # linuxArm64v8Pool
+    pool: # linuxArm64v8
       name: DotNetCore-Infra
       demands:
       - agent.os -equals linux
@@ -113,7 +125,7 @@ jobs:
   parameters:
     name: Test_Linux_arm32v7
     buildDependencies: Build_Linux_arm32v7
-    pool: # linuxArm32v7Pool
+    pool: # linuxArm32v7
       name: DotNetCore-Infra
       demands:
       - agent.os -equals linux
@@ -149,6 +161,19 @@ jobs:
       demands:
       - VSTS_OS -equals Windows_Server_2016_Data_Center_RS4
     matrix: $[ dependencies.GenerateMatrices.outputs['testMatrix.testMatrixNanoserver1803Amd64'] ]
+- template: test-images-linux-client.yml
+  parameters:
+    name: Test_NanoServer1809_arm32
+    buildDependencies: Build_NanoServer1809_arm32
+    pool: # nanoServer1809Arm32
+      name: DotNetCore-Infra
+      demands:
+      - agent.os -equals linux
+      - RemoteDockerServerOS -equals nanoserver-1809
+      - RemoteDockerServerArch -equals arm32
+    matrix: $[ dependencies.GenerateMatrices.outputs['testMatrix.testMatrixNanoserver1809Arm32'] ]
+    architecture: arm
+    useRemoteDockerServer: true
 
   ################################################################################
   # Publish Images
@@ -156,7 +181,7 @@ jobs:
 - template: copy-images.yml
   parameters:
     name: Copy_Images_Linux_amd64
-    pool: # linuxAmd64Pool
+    pool: # linuxAmd64
       name: DotNet-Build
       demands:
       - agent.os -equals linux
@@ -166,7 +191,7 @@ jobs:
 - template: copy-images.yml
   parameters:
     name: Copy_Images_Linux_arm64v8
-    pool: # linuxAmd64Pool - arm images can be copied with amd64 machines which are more plentiful.
+    pool: # linuxAmd64 - arm images can be copied with amd64 machines which are more plentiful.
       name: DotNet-Build
       demands:
       - agent.os -equals linux
@@ -176,7 +201,7 @@ jobs:
 - template: copy-images.yml
   parameters:
     name: Copy_Images_Linux_arm32v7
-    pool: # linuxAmd64Pool - arm images can be copied with amd64 machines which will be much faster.
+    pool: # linuxAmd64 - arm images can be copied with amd64 machines which will be much faster.
       name: DotNet-Build
       demands:
       - agent.os -equals linux
@@ -216,10 +241,21 @@ jobs:
     osVersion: nanoserver-1803
     architecture: amd64
     dockerClientOS: windows
+- template: copy-images.yml
+  parameters:
+    name: Copy_Images_NanoServer1809_arm32
+    pool: # windows1803Amd64 - arm images can be copied with amd64 machines which will be much faster.
+      name: DotNetCore-Infra
+      demands:
+      - VSTS_OS -equals Windows_Server_2016_Data_Center_RS4
+    matrix: $[ dependencies.GenerateMatrices.outputs['buildMatrix.buildMatrixNanoserver1809Arm32'] ]
+    osVersion: nanoserver-1809
+    architecture: arm
+    dockerClientOS: windows
 
 - template: publish-finalize.yml
   parameters:
-    pool: # linuxAmd64Pool
+    pool: # linuxAmd64
       name: DotNet-Build
       demands:
       - agent.os -equals linux

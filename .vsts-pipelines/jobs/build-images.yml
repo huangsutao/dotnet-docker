@@ -27,6 +27,7 @@ jobs:
       --os-version $(osVersion)
       --repo-override microsoft/$(repo)=$(acr.server)/$(repo)-$(stagingRepo.suffix)
       --skip-test
+      --skip-pulling
       --push
       --server $(acr.server)
       --username $(acr.userName)
