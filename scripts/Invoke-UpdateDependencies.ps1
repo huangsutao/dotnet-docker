@@ -20,7 +20,7 @@ try {
         throw "Failed to build the update dependencies tool"
     }
 
-    Invoke-Expression "docker run --rm --user ContainerAdministrator $imageName $UpdateDependenciesParams"
+    Invoke-Expression "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock $imageName $UpdateDependenciesParams"
     if ($LastExitCode -ne 0) {
         throw "Failed to update dependencies"
     }
